@@ -20,13 +20,13 @@ export async function fetchAndAggregateEvents(token: string, year: number, month
       orderBy: 'startTime',
     })
 
-    const events = response.data.items
+    const events = response.data.items || []
 
     const aggregatedData = events.reduce((acc, event) => {
       const title = event.summary || 'Untitled'
-      const start = new Date(event.start.dateTime || event.start.date)
-      const end = new Date(event.end.dateTime || event.end.date)
-      const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60) // in hours
+      const start = new Date(event.start?.dateTime || event.start?.date || '')
+      const end = new Date(event.end?.dateTime || event.end?.date || '')
+      const duration = (end.getTime() - start.getTime()) / (1000 * 60 * 60)
 
       if (acc[title]) {
         acc[title] += duration
@@ -35,7 +35,7 @@ export async function fetchAndAggregateEvents(token: string, year: number, month
       }
 
       return acc
-    }, {})
+    }, {} as Record<string, number>)
 
     return Object.entries(aggregatedData).map(([title, duration]) => ({
       title,
