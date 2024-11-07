@@ -1,14 +1,20 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { GoogleAuth } from '../components/components-google-auth'
 import { DataVisualizationComponent } from '../components/components-data-visualization'
 import { fetchAndAggregateEvents } from './app-actions'
 import { Button } from "@/components/ui/button"
 
+interface EventData {
+  title: string;
+  duration: number;
+  isVisible?: boolean;
+}
+
 export default function Page() {
   const [token, setToken] = useState<string | null>(null)
-  const [data, setData] = useState([])
+  const [data, setData] = useState<EventData[]>([])
   const [currentDate, setCurrentDate] = useState(new Date())
 
   const handleAuthComplete = async (newToken: string) => {
@@ -19,20 +25,41 @@ export default function Page() {
 
   const fetchData = async (token: string, date: Date) => {
     const result = await fetchAndAggregateEvents(token, date.getFullYear(), date.getMonth() + 1)
-    setData(result)
+    if (!result) return
+    setData(result.map(item => ({ ...item, isVisible: true }))
+      .sort((a, b) => b.duration - a.duration))
   }
 
-  const handlePrevMonth = () => {
+  const handlePrevMonth = async () => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
     setCurrentDate(newDate)
-    if (token) fetchData(token, newDate)
+    if (token) await fetchData(token, newDate)
   }
 
-  const handleNextMonth = () => {
+  const handleNextMonth = async () => {
     const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
     setCurrentDate(newDate)
-    if (token) fetchData(token, newDate)
+    if (token) await fetchData(token, newDate)
   }
+
+  const handleCheckboxChange = (index: number) => {
+    setData(prev => prev.map((item, i) => 
+      i === index ? { ...item, isVisible: !item.isVisible } : item
+    ))
+  }
+
+  const handleFetch = async () => {
+    if (!token) return
+    const result = await fetchAndAggregateEvents(token, currentDate.getFullYear(), currentDate.getMonth() + 1)
+    if (!result) return
+    setData(result.sort((a, b) => b.duration - a.duration))
+  }
+
+  useEffect(() => {
+    if (token) {
+      handleFetch()
+    }
+  }, [token])
 
   return (
     <div className="container mx-auto p-4">
@@ -47,7 +74,7 @@ export default function Page() {
             </h2>
             <Button onClick={handleNextMonth}>Next Month</Button>
           </div>
-          <DataVisualizationComponent data={data} />
+          {data.length > 0 && <DataVisualizationComponent data={data} />}
         </div>
       )}
     </div>
