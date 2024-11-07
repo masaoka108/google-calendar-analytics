@@ -1,63 +1,60 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { GoogleAuth } from '../components/components-google-auth'
-import { DataVisualizationComponent } from '../components/components-data-visualization'
-import { fetchAndAggregateEvents } from './app-actions'
 import { Button } from "@/components/ui/button"
+import { GoogleAuth } from './components-google-auth'
+import { DataVisualizationComponent } from './components-data-visualization'
+import { fetchAndAggregateEvents } from './app-actions'
 
 interface EventData {
-  title: string;
-  duration: number;
-  isVisible?: boolean;
+  title: string
+  duration: number
 }
 
 export default function Page() {
-  const [token, setToken] = useState<string | null>(null)
+  const [token, setToken] = useState<string>('')
   const [data, setData] = useState<EventData[]>([])
   const [currentDate, setCurrentDate] = useState(new Date())
 
-  const handleAuthComplete = async (newToken: string) => {
-    console.log('handleAuthComplete 新しいトークン:', newToken)
+  const handleAuthComplete = (newToken: string) => {
     setToken(newToken)
-    await fetchData(newToken, currentDate)
-  }
-
-  const fetchData = async (token: string, date: Date) => {
-    const result = await fetchAndAggregateEvents(token, date.getFullYear(), date.getMonth() + 1)
-    if (!result) return
-    setData(result.map(item => ({ ...item, isVisible: true }))
-      .sort((a, b) => b.duration - a.duration))
   }
 
   const handlePrevMonth = async () => {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1)
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1)
     setCurrentDate(newDate)
-    if (token) await fetchData(token, newDate)
+    if (token) {
+      const result = await fetchAndAggregateEvents(token, newDate.getFullYear(), newDate.getMonth() + 1)
+      if (result) {
+        setData(result.sort((a, b) => b.duration - a.duration))
+      }
+    }
   }
 
   const handleNextMonth = async () => {
-    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 1)
+    const newDate = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1)
     setCurrentDate(newDate)
-    if (token) await fetchData(token, newDate)
-  }
-
-  const handleCheckboxChange = (index: number) => {
-    setData(prev => prev.map((item, i) => 
-      i === index ? { ...item, isVisible: !item.isVisible } : item
-    ))
-  }
-
-  const handleFetch = async () => {
-    if (!token) return
-    const result = await fetchAndAggregateEvents(token, currentDate.getFullYear(), currentDate.getMonth() + 1)
-    if (!result) return
-    setData(result.sort((a, b) => b.duration - a.duration))
+    if (token) {
+      const result = await fetchAndAggregateEvents(token, newDate.getFullYear(), newDate.getMonth() + 1)
+      if (result) {
+        setData(result.sort((a, b) => b.duration - a.duration))
+      }
+    }
   }
 
   useEffect(() => {
     if (token) {
-      handleFetch()
+      const fetchData = async () => {
+        const result = await fetchAndAggregateEvents(
+          token,
+          currentDate.getFullYear(),
+          currentDate.getMonth() + 1
+        )
+        if (result) {
+          setData(result.sort((a, b) => b.duration - a.duration))
+        }
+      }
+      fetchData()
     }
   }, [token])
 
