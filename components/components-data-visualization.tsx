@@ -8,7 +8,7 @@ import {
   ChartOptions,
   PieController
 } from 'chart.js'
-import { Chart } from 'chart.js'
+import { Pie } from 'react-chartjs-2'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 ChartJS.register(
@@ -16,7 +16,7 @@ ChartJS.register(
   Tooltip,
   Legend,
   PieController
-)
+);
 
 interface EventData {
   title: string
@@ -26,61 +26,37 @@ interface EventData {
 
 export function DataVisualizationComponent({ data }: { data: EventData[] }) {
   const [localData, setLocalData] = useState<EventData[]>(data.map(item => ({ ...item, isVisible: true })))
-  const chartRef = useRef<HTMLCanvasElement>(null)
-  const chartInstance = useRef<Chart | null>(null)
 
+  // dataプロップが変更されたときにlocalDataを更新
   useEffect(() => {
     setLocalData(data.map(item => ({ ...item, isVisible: true })))
   }, [data])
 
-  useEffect(() => {
-    if (!chartRef.current) return
+  const visibleData = localData.filter(item => item.isVisible !== false)
 
-    const ctx = chartRef.current.getContext('2d')
-    if (!ctx) return
+  const chartData: ChartData<'pie'> = {
+    labels: visibleData.map(item => item.title),
+    datasets: [{
+      data: visibleData.map(item => item.duration),
+      backgroundColor: [
+        '#FF6384',
+        '#36A2EB',
+        '#FFCE56',
+        '#4BC0C0',
+        '#9966FF',
+        '#FF9F40'
+      ]
+    }]
+  }
 
-    if (chartInstance.current) {
-      chartInstance.current.destroy()
-    }
-
-    const visibleData = localData.filter(item => item.isVisible !== false)
-
-    const chartData: ChartData<'pie'> = {
-      labels: visibleData.map(item => item.title),
-      datasets: [{
-        data: visibleData.map(item => item.duration),
-        backgroundColor: [
-          '#FF6384',
-          '#36A2EB',
-          '#FFCE56',
-          '#4BC0C0',
-          '#9966FF',
-          '#FF9F40'
-        ]
-      }]
-    }
-
-    const options: ChartOptions<'pie'> = {
-      responsive: true,
-      plugins: {
-        legend: {
-          position: 'bottom'
-        }
+  const options: ChartOptions<'pie'> = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'bottom' as const
       }
     }
-
-    chartInstance.current = new Chart(ctx, {
-      type: 'pie',
-      data: chartData,
-      options: options
-    })
-
-    return () => {
-      if (chartInstance.current) {
-        chartInstance.current.destroy()
-      }
-    }
-  }, [localData])
+  }
 
   const handleCheckboxChange = (index: number) => {
     setLocalData(prev => prev.map((item, i) => 
@@ -94,8 +70,7 @@ export function DataVisualizationComponent({ data }: { data: EventData[] }) {
         <CardHeader>
           <CardTitle>Event List</CardTitle>
           <div className="text-sm text-muted-foreground">
-            Total: {localData
-              .filter(item => item.isVisible !== false)
+            Total: {visibleData
               .reduce((acc, item) => acc + item.duration, 0)
               .toFixed(2)} hours
           </div>
@@ -128,7 +103,7 @@ export function DataVisualizationComponent({ data }: { data: EventData[] }) {
           <CardTitle>Time Distribution</CardTitle>
         </CardHeader>
         <CardContent>
-          <canvas ref={chartRef} />
+          <Pie data={chartData} options={options} />
         </CardContent>
       </Card>
     </div>
