@@ -71,6 +71,12 @@ export function DataVisualizationComponent({ data }: { data: EventData[] }) {
       <Card>
         <CardHeader>
           <CardTitle>Event List</CardTitle>
+          <div className="text-sm text-muted-foreground">
+            Total: {localData
+              .filter(item => item.isVisible !== false)
+              .reduce((acc, item) => acc + item.duration, 0)
+              .toFixed(2)} hours
+          </div>
         </CardHeader>
         <CardContent>
           <ul className="space-y-2">
