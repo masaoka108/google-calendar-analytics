@@ -60,8 +60,10 @@ export default function Page() {
 
   return (
     <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">Google Calendar Analytics</h1>
-      <GoogleAuth onAuthComplete={handleAuthComplete} />
+      <div className="flex flex-col items-center justify-center">
+        <h1 className="text-2xl font-bold mb-4">Googleアカウントを連携してタイムマネージメントを始めよう🗓️</h1>
+        <GoogleAuth onAuthComplete={handleAuthComplete} />
+      </div>
       {token && (
         <div className="mt-4">
           <div className="flex justify-between items-center mb-4">
