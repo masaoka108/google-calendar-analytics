@@ -1,6 +1,17 @@
+import { LucideIcon } from "lucide-react"
+
 export interface NavItem {
   title: string
   href?: string
   disabled?: boolean
   external?: boolean
+  icon?: LucideIcon
 }
+
+export interface NavItemWithChildren extends NavItem {
+  items: NavItem[]
+}
+
+export interface MainNavItem extends NavItem {}
+
+export interface SidebarNavItem extends NavItemWithChildren {}
